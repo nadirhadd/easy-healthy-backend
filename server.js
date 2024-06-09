@@ -10,8 +10,8 @@ app.use(express.json());
 
 const db = mysql.createConnection({
     host: 'localhost',
-    user: 'username',
-    password: 'password',
+    user: 'root',
+    password: '',
     database: 'dokter'
 });
 
@@ -31,6 +31,33 @@ app.get('/profiles', (req, res) => {
             return;
         }
         res.json(results);
+    });
+});
+
+app.get('/pasien', (req, res) => {
+    db.query('SELECT * FROM pasien', (err, results) => {
+        if (err){
+            console.log('Error fetching profiles:', err);
+            res.status(500).send('Server Error');
+            return;
+        }
+        res.json(results);
+    });
+});
+
+app.post('/pasien', (req, res) => {
+    const { NIK, Nama_Pasien, Jenis_Pasien, Nomor_HP, Dokter, Poli, Tanggal_Periksa } = req.body;
+
+    const sql = 'INSERT INTO pasien (NIK, `Nama Pasien`, `Jenis Pasien`, `Nomor HP`, `Dokter`, `Poli`, `Tanggal Periksa`) VALUES (?, ?, ?, ?, ?, ?, ?)';
+    const values = [NIK, Nama_Pasien, Jenis_Pasien, Nomor_HP, Dokter, Poli, Tanggal_Periksa];
+
+    db.query(sql, values, (err, result) => {
+        if(err) {
+            console.error('Gagal memproses booking', err);
+            res.status(500).send('Server Error');
+            return;
+        }
+        res.send('Booking Berhasil!');
     });
 });
 
