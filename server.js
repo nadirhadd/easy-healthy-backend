@@ -10,77 +10,19 @@ app.use(express.json());
 
 const db = mysql.createPool({
     host: 'localhost',
-    user: 'username',
-    password: 'password',
+    user: 'root',
+    password: '',
     database: 'dokter'
 });
 
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-        const hashPw = await bcrypt.hash(password, 12);
-
-        const sql = 'INSERT INTO users (username, password) VALUES(?, ?)';
-        await db.execute(sql, [username, hashPw]);
-
-        res.status(200).json({ message: 'success' });
-    } catch (error) {
-        console.log('failed', error);
-        res.status(500).json({ message: 'server error' });
-    }
+const forumDb = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    database: 'forumdb',
 });
 
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-        const sql = 'SELECT * FROM users WHERE username = ? AND password = ?';
-        const [rows] = await db.execute(sql, [username, password]);
-
-        if (rows.length === 0) {
-            return res.status(401).json({ message: 'invalid' });
-        }
-
-        const user = rows[0];
-
-        const userData = {
-            username: user.username,
-            name: user.name
-        };
-
-        res.status(200).json({ message: 'success', user });
-
-    } catch (error) {
-        console.log('failed', error);
-        res.status(500).json({ message: 'error', error });
-    }
-});
-
-app.post('/posts', async(req, res) => {
-    const { name, content } = req.body;
-
-    try {
-        const sql = 'INSERT INTO posts (username, content) VALUES (?, ?)';
-        await db.query(sql, [name, content]);
-
-        res.status(200).json({message: 'Post created'});
-    } catch (error) {
-        console.error('Post error', error);
-        res.status(500).send({message: 'server error'});
-    }
-});
-
-app.get('/profiles', async (req, res) => {
-    try{
-        const [results] = await db.execute('SELECT * FROM profile');
-        res.json(results);
-    } catch (err) {
-        console.error('Error');
-        res.status(500).send('Server Error');
-    }
-});
-
+//dokterDb system
 app.get('/pasien', async (req, res) => {
     try {
         const [results] = await db.execute('SELECT * FROM pasien');
@@ -105,6 +47,68 @@ app.post('/pasien', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+app.get('/profiles', async (req, res) => {
+    try {
+        const [results] = await db.query('SELECT * FROM profile');
+        res.json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+//forumDb system
+app.get('/users', async (req, res) => {
+    try {
+        const [results] = await forumDb.query('SELECT * FROM users');
+        res.json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+//New User
+app.post('/register', async (req, res) => {
+    const { username, password, full_name } = req.body;
+
+    try {
+        const [results] = await forumDb.execute('INSERT INTO users (username, password, full_name) VALUES (?, ?, ?)', [username, password, full_name]);
+        res.json({ message: 'Registrasi Berhasil', userId: results.insertId });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+});
+
+//Login
+app.post('/login', async(req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const [rows] = await forumDb.execute('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
+
+        if (rows.length === 0) {
+            return resizeTo.status(401).json({ message: 'Invalid' })
+        }
+        const user = rows[0];
+
+        const userData = {
+            username: user.username,
+            name: user.name
+        }
+
+        res.status(200).json({ message: 'Success', user });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+//New Question
 
 
 app.listen(port, () => {
