@@ -101,7 +101,7 @@ app.post('/login', async(req, res) => {
             name: user.name,
         }
 
-        res.status(200).json({ message: 'Success', userData });
+        res.status(200).json({ message: 'Success', user });
 
     } catch (error) {
         console.error(error);
@@ -111,11 +111,11 @@ app.post('/login', async(req, res) => {
 
 //New Question
 app.post('/questions', async (req, res) => {
-    const { title, content } = req.body;
+    const { title, content, userId } = req.body;
 
     try {
-        const [results] = await forumDb.execute('INSERT INTO questions (title, content) VALUES (?, ?)', [title, content]);
-        res.json({ message: 'Berhasil', questionId: results.insertId });
+        const [results] = await forumDb.execute('INSERT INTO questions (title, content, user_id) VALUES (?, ?, ?)', [title, content, userId]);
+        res.json({ message: 'Berhasil', questionId: results.insertId, userId: results.insertId });
 
     } catch (error) {
         console.error(error);
