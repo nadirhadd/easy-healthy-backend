@@ -4,21 +4,22 @@ const cors = require('cors');
 
 const app = express();
 const port = 3001;
+const router = express.Router();
 
 app.use(cors());
 app.use(express.json());
 
 const db = mysql.createPool({
     host: 'localhost',
-    user: 'root',
-    password: '',
+    user: 'username',
+    password: 'password',
     database: 'dokter'
 });
 
 const forumDb = mysql.createPool({
     host: 'localhost',
-    user: 'root',
-    password: '',
+    user: 'username',
+    password: 'password',
     database: 'forumdb',
 });
 
@@ -109,7 +110,53 @@ app.post('/login', async(req, res) => {
 });
 
 //New Question
+app.post('/questions', async (req, res) => {
+    const { title, content } = req.body;
 
+    try {
+        const [results] = await forumDb.execute('INSERT INTO questions (title, content) VALUES (?, ?)', [title, content]);
+        res.json({ message: 'Berhasil', questionId: results.insertId });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+});
+
+//Question List
+app.get('/questions', async (req, res) => {
+    try {
+        const [results] = await forumDb.query('SELECT * FROM questions');
+        res.json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+//New Comment
+app.post('/comments', async (req, res) => {
+    const { content } = req.body;
+
+    try {
+        const [results] = await forumDb.execute('INSERT INTO comments (content) VALUES (?)', [content]);
+        res.json({ message: 'Berhasil', commentId: results.insertId });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server error');
+    }
+});
+
+app.get('/comments', async (req, res) => {
+    try {
+        const [results] = await forumDb.query('SELECT * FROM comments');
+        res.json(results);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
