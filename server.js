@@ -11,15 +11,15 @@ app.use(express.json());
 
 const db = mysql.createPool({
     host: 'localhost',
-    user: 'username',
-    password: 'password',
+    user: 'root',
+    password: '',
     database: 'dokter'
 });
 
 const forumDb = mysql.createPool({
     host: 'localhost',
-    user: 'username',
-    password: 'password',
+    user: 'root',
+    password: '',
     database: 'forumdb',
 });
 
@@ -72,10 +72,10 @@ app.get('/users', async (req, res) => {
 
 //New User
 app.post('/register', async (req, res) => {
-    const { username, password, full_name } = req.body;
+    const { username, password, full_name, email } = req.body;
 
     try {
-        const [results] = await forumDb.execute('INSERT INTO users (username, password, full_name) VALUES (?, ?, ?)', [username, password, full_name]);
+        const [results] = await forumDb.execute('INSERT INTO users (username, password, full_name, email) VALUES (?, ?, ?, ?)', [username, password, full_name, email]);
         res.json({ message: 'Registrasi Berhasil', userId: results.insertId });
 
     } catch (error) {
@@ -92,16 +92,16 @@ app.post('/login', async(req, res) => {
         const [rows] = await forumDb.execute('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
 
         if (rows.length === 0) {
-            return resizeTo.status(401).json({ message: 'Invalid' })
+            return res.status(401).json({ message: 'Invalid' })
         }
         const user = rows[0];
 
         const userData = {
             username: user.username,
-            name: user.name
+            name: user.name,
         }
 
-        res.status(200).json({ message: 'Success', user });
+        res.status(200).json({ message: 'Success', userData });
 
     } catch (error) {
         console.error(error);
